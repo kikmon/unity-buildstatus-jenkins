@@ -1,0 +1,12 @@
+# Ignore all Unity asset files (.asset) in the Editor folder (config data files)
+*.asset
+
+# (Optional) If you want to exclude other common Unity cache and meta files
+Library/
+Temp/
+Obj/
+Build/
+Builds/
+UserSettings/
+Logs/
+MemoryCaptures/
