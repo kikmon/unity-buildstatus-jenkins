@@ -11,7 +11,7 @@ namespace UnityBuildStatusJenkins
     {
         private JenkinsConfig config;
 
-        // User credentials - per user, saved in EditorPrefs
+        // User credentials - saved in EditorPrefs
         private string username;
         private string apiToken;
 
@@ -20,6 +20,9 @@ namespace UnityBuildStatusJenkins
 
         private const string UsernamePrefKey = "UBSJ_Username";
         private const string ApiTokenPrefKey = "UBSJ_ApiToken";
+
+        private double nextRefreshTime = 0;
+        private const double refreshIntervalSeconds = 30.0;
 
         [MenuItem("Window/Build Status/Jenkins")]
         public static void ShowWindow()
@@ -45,7 +48,23 @@ namespace UnityBuildStatusJenkins
             username = EditorPrefs.GetString(UsernamePrefKey, "");
             apiToken = EditorPrefs.GetString(ApiTokenPrefKey, "");
 
+            EditorApplication.update += OnEditorUpdate;
+
             _ = CheckStatusAsync();
+        }
+
+        private void OnDisable()
+        {
+            EditorApplication.update -= OnEditorUpdate;
+        }
+
+        private void OnEditorUpdate()
+        {
+            if (EditorApplication.timeSinceStartup >= nextRefreshTime)
+            {
+                nextRefreshTime = EditorApplication.timeSinceStartup + refreshIntervalSeconds;
+                _ = CheckStatusAsync();
+            }
         }
 
         private void OnGUI()
@@ -97,6 +116,8 @@ namespace UnityBuildStatusJenkins
             }
 
             GUILayout.Space(10);
+
+            // Draw the colored status indicator box
             EditorGUI.DrawRect(GUILayoutUtility.GetRect(50, 50), statusColor);
             GUILayout.Label("Status: " + buildStatus);
         }
@@ -104,7 +125,7 @@ namespace UnityBuildStatusJenkins
         private string GetJobApiUrl()
         {
             if (config == null) return "";
-            // If you want to support parameters, build query string here
+            // Add parameter support here if needed
             return $"{config.jenkinsBaseUrl}/job/{config.jobName}/lastBuild/api/json";
         }
 

@@ -1,0 +1,35 @@
+# .editorconfig for C# 12 / .NET 8 with analyzers enabled
+
+root = true
+
+[*.cs]
+# Use latest C# language version
+dotnet_language_version = latest
+
+# Enable all recommended code style rules
+dotnet_analyzer_diagnostic.severity = error
+
+# Treat all warnings as errors (including analyzer warnings)
+# dotnet_analyzer_diagnostic.category-Style.severity = error
+# dotnet_analyzer_diagnostic.category-Simplification.severity = error
+# dotnet_analyzer_diagnostic.category-Refactoring.severity = error
+# dotnet_analyzer_diagnostic.category-Reliability.severity = error
+# dotnet_analyzer_diagnostic.category-Design.severity = error
+# dotnet_analyzer_diagnostic.category-Usage.severity = error
+# dotnet_analyzer_diagnostic.category-Naming.severity = error
+# dotnet_analyzer_diagnostic.category-Maintainability.severity = error
+# dotnet_analyzer_diagnostic.category-Performance.severity = error
+# dotnet_analyzer_diagnostic.category-Security.severity = error
+
+# Enable nullable reference types analysis
+dotnet_enable_full_solution_analysis = true
+
+dotnet_diagnostic.IDE0008.severity = error
+dotnet_diagnostic.IDE0007.severity = error
+
+# Use 'var' for built-in types (int, string, etc.)
+csharp_style_var_for_built_in_types = true:error
+
+# Do not use 'var' for other types (force explicit type)
+csharp_style_var_when_type_is_apparent = false:error
+csharp_style_var_elsewhere = false:error
