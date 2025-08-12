@@ -1,5 +1,5 @@
 {
-  "name": "com.kikmon.unity-buildstatus-jenkins",
+  "name": "com.kikmon.unity.buildstatus.jenkins",
   "version": "0.1.0",
   "displayName": "Unity Build Status Jenkins",
   "description": "A Unity Editor plugin to check Jenkins build status directly in the Editor.",
