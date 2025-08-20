@@ -9,14 +9,14 @@ namespace UnityBuildStatusJenkins
 {
     public class JenkinsToolbarUI : VisualElement
     {
-        private Label statusLabel;
-        private VisualElement colorIndicator;
+        private readonly Label statusLabel;
+        private readonly VisualElement colorIndicator;
 
         private double nextCall;
         private const double interval = 30.0;
-        private JenkinsConfig config;
-        private string username;
-        private string apiToken;
+        private readonly JenkinsConfig config;
+        private readonly string username;
+        private readonly string apiToken;
 
         public JenkinsToolbarUI()
         {
@@ -78,11 +78,11 @@ namespace UnityBuildStatusJenkins
 
             try
             {
-                using var client = new HttpClient();
+                using HttpClient client = new();
                 var auth = Convert.ToBase64String(System.Text.Encoding.ASCII.GetBytes($"{username}:{apiToken}"));
                 client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", auth);
 
-                var resp = await client.GetAsync($"{config.jenkinsBaseUrl}/job/{config.jobName}/lastBuild/api/json");
+                HttpResponseMessage resp = await client.GetAsync($"{config.jenkinsBaseUrl}/job/{config.jobName}/lastBuild/api/json");
                 if (!resp.IsSuccessStatusCode)
                 {
                     SetStatus($"HTTP {resp.StatusCode}", Color.magenta);
@@ -91,13 +91,21 @@ namespace UnityBuildStatusJenkins
 
                 var json = await resp.Content.ReadAsStringAsync();
                 if (json.Contains("\"result\":\"SUCCESS\""))
+                {
                     SetStatus("SUCCESS", Color.green);
+                }
                 else if (json.Contains("\"result\":\"FAILURE\""))
+                {
                     SetStatus("FAILURE", Color.red);
+                }
                 else if (json.Contains("\"building\":true"))
+                {
                     SetStatus("BUILDING", Color.yellow);
+                }
                 else
+                {
                     SetStatus("UNKNOWN", Color.gray);
+                }
             }
             catch (Exception e)
             {

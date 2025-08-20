@@ -22,7 +22,7 @@ namespace UnityBuildStatusJenkins
         [MenuItem("Window/Build Status/Jenkins Dock")]
         public static void ShowWindow()
         {
-            var wnd = GetWindow<JenkinsStatusWindowDocked>("Jenkins Status");
+            JenkinsStatusWindowDocked wnd = GetWindow<JenkinsStatusWindowDocked>("Jenkins Status");
             wnd.minSize = new Vector2(200, 40);
         }
 
@@ -35,7 +35,7 @@ namespace UnityBuildStatusJenkins
 
             statusLabel = new Label("Jenkins: UNKNOWN");
 
-            var container = new VisualElement
+            VisualElement container = new()
             {
                 style =
                 {
@@ -101,11 +101,11 @@ namespace UnityBuildStatusJenkins
 
             try
             {
-                using var client = new HttpClient();
+                using HttpClient client = new();
                 var auth = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{username}:{apiToken}"));
                 client.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", auth);
 
-                var response = await client.GetAsync($"{config.jenkinsBaseUrl}/job/{config.jobName}/lastBuild/api/json");
+                HttpResponseMessage response = await client.GetAsync($"{config.jenkinsBaseUrl}/job/{config.jobName}/lastBuild/api/json");
                 if (!response.IsSuccessStatusCode)
                 {
                     SetStatus($"HTTP {response.StatusCode}", Color.magenta);
@@ -114,13 +114,21 @@ namespace UnityBuildStatusJenkins
 
                 var json = await response.Content.ReadAsStringAsync();
                 if (json.Contains("\"result\":\"SUCCESS\""))
+                {
                     SetStatus("SUCCESS", Color.green);
+                }
                 else if (json.Contains("\"result\":\"FAILURE\""))
+                {
                     SetStatus("FAILURE", Color.red);
+                }
                 else if (json.Contains("\"building\":true"))
+                {
                     SetStatus("BUILDING", Color.yellow);
+                }
                 else
+                {
                     SetStatus("UNKNOWN", Color.gray);
+                }
             }
             catch (Exception e)
             {

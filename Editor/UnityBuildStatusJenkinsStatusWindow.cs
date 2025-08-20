@@ -27,16 +27,16 @@ namespace UnityBuildStatusJenkins
         [MenuItem("Window/Build Status/Jenkins")]
         public static void ShowWindow()
         {
-            GetWindow<UnityBuildStatusJenkinsWindow>("Jenkins Status");
+            _ = GetWindow<UnityBuildStatusJenkinsWindow>("Jenkins Status");
         }
 
         private void OnEnable()
         {
             // Load JenkinsConfig asset from the project
-            string[] guids = AssetDatabase.FindAssets("t:JenkinsConfig");
+            var guids = AssetDatabase.FindAssets("t:JenkinsConfig");
             if (guids.Length > 0)
             {
-                string path = AssetDatabase.GUIDToAssetPath(guids[0]);
+                var path = AssetDatabase.GUIDToAssetPath(guids[0]);
                 config = AssetDatabase.LoadAssetAtPath<JenkinsConfig>(path);
             }
             else
@@ -83,8 +83,8 @@ namespace UnityBuildStatusJenkins
 
             // Show project settings as read-only fields
             EditorGUI.BeginDisabledGroup(true);
-            EditorGUILayout.TextField("Jenkins Base URL", config.jenkinsBaseUrl);
-            EditorGUILayout.TextField("Job Name", config.jobName);
+            _ = EditorGUILayout.TextField("Jenkins Base URL", config.jenkinsBaseUrl);
+            _ = EditorGUILayout.TextField("Job Name", config.jobName);
             if (config.jobParameters != null && config.jobParameters.Length > 0)
             {
                 GUILayout.Label("Job Parameters:");
@@ -124,7 +124,10 @@ namespace UnityBuildStatusJenkins
 
         private string GetJobApiUrl()
         {
-            if (config == null) return "";
+            if (config == null)
+            {
+                return "";
+            }
             // Add parameter support here if needed
             return $"{config.jenkinsBaseUrl}/job/{config.jobName}/lastBuild/api/json";
         }
@@ -149,44 +152,42 @@ namespace UnityBuildStatusJenkins
 
             try
             {
-                using (var client = new HttpClient())
+                using HttpClient client = new();
+                var authToken = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{username}:{apiToken}"));
+                client.DefaultRequestHeaders.Authorization =
+                    new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", authToken);
+
+                HttpResponseMessage response = await client.GetAsync(GetJobApiUrl());
+
+                if (!response.IsSuccessStatusCode)
                 {
-                    var authToken = Convert.ToBase64String(Encoding.ASCII.GetBytes($"{username}:{apiToken}"));
-                    client.DefaultRequestHeaders.Authorization =
-                        new System.Net.Http.Headers.AuthenticationHeaderValue("Basic", authToken);
+                    buildStatus = $"HTTP Error: {response.StatusCode}";
+                    statusColor = Color.magenta;
+                    Repaint();
+                    return;
+                }
 
-                    var response = await client.GetAsync(GetJobApiUrl());
+                var json = await response.Content.ReadAsStringAsync();
 
-                    if (!response.IsSuccessStatusCode)
-                    {
-                        buildStatus = $"HTTP Error: {response.StatusCode}";
-                        statusColor = Color.magenta;
-                        Repaint();
-                        return;
-                    }
-
-                    var json = await response.Content.ReadAsStringAsync();
-
-                    if (json.Contains("\"result\":\"SUCCESS\""))
-                    {
-                        statusColor = Color.green;
-                        buildStatus = "SUCCESS";
-                    }
-                    else if (json.Contains("\"result\":\"FAILURE\""))
-                    {
-                        statusColor = Color.red;
-                        buildStatus = "FAILURE";
-                    }
-                    else if (json.Contains("\"building\":true"))
-                    {
-                        statusColor = Color.yellow;
-                        buildStatus = "BUILDING";
-                    }
-                    else
-                    {
-                        statusColor = Color.gray;
-                        buildStatus = "UNKNOWN";
-                    }
+                if (json.Contains("\"result\":\"SUCCESS\""))
+                {
+                    statusColor = Color.green;
+                    buildStatus = "SUCCESS";
+                }
+                else if (json.Contains("\"result\":\"FAILURE\""))
+                {
+                    statusColor = Color.red;
+                    buildStatus = "FAILURE";
+                }
+                else if (json.Contains("\"building\":true"))
+                {
+                    statusColor = Color.yellow;
+                    buildStatus = "BUILDING";
+                }
+                else
+                {
+                    statusColor = Color.gray;
+                    buildStatus = "UNKNOWN";
                 }
             }
             catch (Exception ex)
@@ -201,11 +202,13 @@ namespace UnityBuildStatusJenkins
 
         private void CreateConfigAsset()
         {
-            string path = EditorUtility.SaveFilePanelInProject("Create JenkinsConfig", "JenkinsConfig", "asset", "Save Jenkins config asset");
+            var path = EditorUtility.SaveFilePanelInProject("Create JenkinsConfig", "JenkinsConfig", "asset", "Save Jenkins config asset");
             if (string.IsNullOrEmpty(path))
+            {
                 return;
+            }
 
-            var newConfig = CreateInstance<JenkinsConfig>();
+            JenkinsConfig newConfig = CreateInstance<JenkinsConfig>();
             AssetDatabase.CreateAsset(newConfig, path);
             AssetDatabase.SaveAssets();
             config = newConfig;
